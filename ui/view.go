@@ -2,6 +2,9 @@ package ui
 
 import "fyne.io/fyne/v2"
 
+type EventType string
+type ViewType string
+
 type IView interface {
 	ShowUI()
 	On(e EventType)
@@ -10,6 +13,3 @@ type IView interface {
 	createComponents() *fyne.Container
 	next()
 }
-
-type EventType string
-type ViewType string

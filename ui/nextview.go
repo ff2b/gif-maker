@@ -38,7 +38,7 @@ func (v *NextView) Refresh() {
 
 func (v *NextView) createComponents() *fyne.Container {
 	return container.NewVBox(
-		widget.NewLabel("Next view transitioned. Button click will back Mainview."),
+		widget.NewLabel("Next view has transitioned. Button click will back Mainview."),
 		widget.NewButton("Back", func() { v.next() }),
 	)
 }

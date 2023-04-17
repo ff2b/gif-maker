@@ -10,24 +10,36 @@ import (
 )
 
 type MainView struct {
-	ctx *UIContext
+	ctx    *UIContext
+	events map[EventType]func()
 }
 
 func NewMainView(ctx *UIContext) *MainView {
-	return &MainView{ctx: ctx}
+	event_routes := map[EventType]func(){
+		"click": onClick,
+	}
+	return &MainView{ctx: ctx, events: event_routes}
 }
 
 func (v *MainView) ShowUI() {
 	v.ctx.win.SetContent(v.createComponents())
-	v.On("create")
 }
 
 func (v *MainView) On(e EventType) {
-	log.Println("on:", e)
+	// Execute event function which is mapped EventType.
+	if f, ok := v.events[e]; !ok {
+		log.Fatal("Error: Invalid event fired.", e, ok)
+	} else {
+		f()
+	}
 }
 
 func (v *MainView) GetViewType() ViewType {
 	return "main"
+}
+
+func (v *MainView) Refresh() {
+	v.ctx.win.Content().Refresh()
 }
 
 func (v *MainView) createComponents() *fyne.Container {
@@ -35,6 +47,10 @@ func (v *MainView) createComponents() *fyne.Container {
 		widget.NewLabel("Hello World!"),
 		v.makefooter(),
 	)
+}
+
+func (v *MainView) next() {
+	v.ctx.SetState(NewNextView(v.ctx))
 }
 
 func (v *MainView) makeHeader() *fyne.Container {
@@ -112,15 +128,15 @@ func (v *MainView) makeBody() *fyne.Container {
 }
 
 func (v *MainView) makefooter() *fyne.Container {
-	return container.NewCenter(
+	return container.NewHBox(
+		widget.NewButton("event test", func() {
+			v.On("click")
+		}),
 		widget.NewButton("change state", func() { v.next() }),
 	)
 }
 
-func (v *MainView) Refresh() {
-	v.ctx.win.Content().Refresh()
-}
-
-func (v *MainView) next() {
-	v.ctx.SetState(NewNextView(v.ctx))
+// Event functions
+func onClick() {
+	log.Println("onclick event hudled!")
 }
