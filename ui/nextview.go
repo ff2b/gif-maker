@@ -1,17 +1,25 @@
 package ui
 
 import (
+	"log"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
 )
 
 type NextView struct {
-	ctx *UIContext
+	ctx    *UIContext
+	events map[EventType]func()
 }
 
 func NewNextView(ctx *UIContext) *NextView {
-	return &NextView{ctx: ctx}
+	view := &NextView{ctx: ctx, events: nil}
+	// Register events
+	view.events = map[EventType]func(){
+		"back": view.onBack,
+	}
+	return view
 }
 
 func (v *NextView) ShowUI() {
@@ -20,7 +28,13 @@ func (v *NextView) ShowUI() {
 }
 
 func (v *NextView) On(e EventType) {
-
+	// Execute event function which is mapped EventType.
+	if f, ok := v.events[e]; !ok {
+		log.Fatal("Error: Invalid event fired.", e, ok)
+	} else {
+		log.Println("Event hundled.", e)
+		f()
+	}
 }
 
 func (v *NextView) GetViewType() ViewType {
@@ -28,10 +42,6 @@ func (v *NextView) GetViewType() ViewType {
 }
 
 func (v *NextView) Refresh() {
-	// clear_layout := container.NewMax(
-	// 	canvas.NewRectangle(theme.BackgroundColor()),
-	// )
-	// v.ctx.win.SetContent(clear_layout)
 	v.ctx.win.SetContent(v.createComponents())
 	v.ctx.win.Content().Refresh()
 }
@@ -39,10 +49,14 @@ func (v *NextView) Refresh() {
 func (v *NextView) createComponents() *fyne.Container {
 	return container.NewVBox(
 		widget.NewLabel("Next view has transitioned. Button click will back Mainview."),
-		widget.NewButton("Back", func() { v.next() }),
+		widget.NewButton("Back", func() { v.On("back") }),
 	)
 }
 
 func (v *NextView) next() {
-	v.ctx.SetState(&MainView{ctx: v.ctx})
+	v.ctx.SetState(NewMainView(v.ctx))
+}
+
+func (v *NextView) onBack() {
+	v.next()
 }

@@ -1,15 +1,29 @@
 package ui
 
-import "fyne.io/fyne/v2"
+import (
+	"log"
+
+	"fyne.io/fyne/v2"
+)
 
 type EventType string
 type ViewType string
 
 type IView interface {
 	ShowUI()
-	On(e EventType)
 	GetViewType() ViewType
 	Refresh()
 	createComponents() *fyne.Container
-	next()
+}
+
+// Common
+// Hundle event functions.
+func On(e EventType, events map[EventType]func()) {
+	// Execute event function which is mapped EventType.
+	if f, ok := events[e]; !ok {
+		log.Fatal("Error: Invalid event fired.", e, ok)
+	} else {
+		log.Println("Event hundled.", e)
+		f()
+	}
 }

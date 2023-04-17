@@ -15,23 +15,17 @@ type MainView struct {
 }
 
 func NewMainView(ctx *UIContext) *MainView {
-	event_routes := map[EventType]func(){
-		"click": onClick,
+	view := &MainView{ctx: ctx, events: nil}
+	// Register events
+	view.events = map[EventType]func(){
+		"click": view.onClick,
+		"open":  view.onOpenFolder,
 	}
-	return &MainView{ctx: ctx, events: event_routes}
+	return view
 }
 
 func (v *MainView) ShowUI() {
 	v.ctx.win.SetContent(v.createComponents())
-}
-
-func (v *MainView) On(e EventType) {
-	// Execute event function which is mapped EventType.
-	if f, ok := v.events[e]; !ok {
-		log.Fatal("Error: Invalid event fired.", e, ok)
-	} else {
-		f()
-	}
 }
 
 func (v *MainView) GetViewType() ViewType {
@@ -45,6 +39,8 @@ func (v *MainView) Refresh() {
 func (v *MainView) createComponents() *fyne.Container {
 	return container.NewVBox(
 		widget.NewLabel("Hello World!"),
+		v.makeHeader(),
+		v.makeBody(),
 		v.makefooter(),
 	)
 }
@@ -57,7 +53,7 @@ func (v *MainView) makeHeader() *fyne.Container {
 	return container.NewVBox(
 		container.NewHBox(
 			widget.NewButton("Open", func() {
-				// v.notifyEvent("openfolder")
+				On("open", v.events)
 			}),
 			widget.NewButton("Help", func() {
 				// v.notifyEvent("openhelp")
@@ -116,7 +112,7 @@ func (v *MainView) makeBody() *fyne.Container {
 	// 		log.Printf("newImage: %#v\n", newImage)
 	// 		newImage.FillMode = canvas.ImageFillContain
 	// 		newImage.SetMinSize(fyne.NewSize(50, 50))
-	// 		// Delete Image object
+	// 		// Delete Image objectOn
 	// 		v.preview.Remove(v.preview.Objects[1])
 	// 		v.preview.Add(newImage)
 	// 		v.Refresh()
@@ -130,13 +126,17 @@ func (v *MainView) makeBody() *fyne.Container {
 func (v *MainView) makefooter() *fyne.Container {
 	return container.NewHBox(
 		widget.NewButton("event test", func() {
-			v.On("click")
+			On("click", v.events)
 		}),
 		widget.NewButton("change state", func() { v.next() }),
 	)
 }
 
 // Event functions
-func onClick() {
+func (v *MainView) onClick() {
 	log.Println("onclick event hudled!")
+}
+
+func (v *MainView) onOpenFolder() {
+	v.ctx.SetState(NewOpenFolderView(v.ctx))
 }
