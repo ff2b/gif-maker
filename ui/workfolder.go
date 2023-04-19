@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/data/binding"
 )
 
 type WorkFolder struct {
@@ -34,7 +35,12 @@ func NewWorkFolder(uriList []fyne.URI) *WorkFolder {
 	wf := getWorkFolderInstance()
 	wf.UriList = filterJPGorPNG(uriList)
 	wf.IsSelectedFlags = make([]bool, len(wf.UriList))
+	wf.SetSelectFlagsAll(false)
 	return wf
+}
+
+func GetWorkFolder() *WorkFolder {
+	return getWorkFolderInstance()
 }
 
 func filterJPGorPNG(uriList []fyne.URI) []fyne.URI {
@@ -49,13 +55,16 @@ func filterJPGorPNG(uriList []fyne.URI) []fyne.URI {
 	return filteredURIs
 }
 
-func (wf *WorkFolder) UpdateURIListItem(id int, path fyne.URI, isSelect bool) {
+func (wf *WorkFolder) UpdateSelectedURIListItem(id int) {
 	if id < 0 || id > len(wf.UriList) {
 		// invalid id, panic.
 		log.Fatalf("Invalid argument [id]:%v.\n", id)
 	}
-	wf.UriList[id] = path
-	wf.IsSelectedFlags[id] = isSelect
+	// reverse isSelectedFlag
+	old := wf.IsSelectedFlags[id]
+	wf.IsSelectedFlags[id] = !old
+	log.Printf("[%s]: %v -> %v", wf.UriList[id], old, wf.IsSelectedFlags[id])
+	log.Printf("%v", wf.IsSelectedFlags)
 }
 
 func (wf *WorkFolder) GetSelectedURIs() []fyne.URI {
@@ -68,7 +77,7 @@ func (wf *WorkFolder) GetSelectedURIs() []fyne.URI {
 	return selectedList
 }
 
-func (wf *WorkFolder) SelectFlagsAll(isSelect bool) {
+func (wf *WorkFolder) SetSelectFlagsAll(isSelect bool) {
 	for i := range wf.IsSelectedFlags {
 		wf.IsSelectedFlags[i] = isSelect
 	}
@@ -87,4 +96,19 @@ func (wf *WorkFolder) whereURIIndex(uri fyne.URI) int {
 	}
 	log.Fatal("Same uri not found.")
 	return -1
+}
+
+func (wf *WorkFolder) CreateBindingURIList() binding.URIList {
+	bindList := binding.NewURIList()
+	if len(wf.UriList) == 0 {
+		// return empty bindList
+		return bindList
+	}
+	// Binding list
+	err := bindList.Set(wf.UriList)
+	if err != nil {
+		log.Fatal(err)
+		return nil
+	}
+	return bindList
 }

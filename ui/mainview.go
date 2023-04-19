@@ -4,23 +4,31 @@ import (
 	"log"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
 
 type MainView struct {
-	ctx    *UIContext
-	events map[EventType]func()
+	ctx            *UIContext
+	events         map[EventType]func()
+	pathListWidget *widget.List
+	bindURIList    binding.DataList
+	preview        *fyne.Container
+	workfolder     *WorkFolder
 }
 
 func NewMainView(ctx *UIContext) *MainView {
-	view := &MainView{ctx: ctx, events: nil}
+	view := &MainView{ctx: ctx, events: nil, pathListWidget: nil, bindURIList: nil, preview: nil, workfolder: nil}
 	// Register events
 	view.events = map[EventType]func(){
 		"click": view.onClick,
 		"open":  view.onOpenFolder,
 	}
+	view.workfolder = GetWorkFolder()
+	view.bindURIList = view.workfolder.CreateBindingURIList()
 	return view
 }
 
@@ -33,16 +41,12 @@ func (v *MainView) GetViewType() ViewType {
 }
 
 func (v *MainView) Refresh() {
+	v.bindURIList = v.workfolder.CreateBindingURIList()
 	v.ctx.win.Content().Refresh()
 }
 
 func (v *MainView) createComponents() *fyne.Container {
-	return container.NewVBox(
-		widget.NewLabel("Hello World!"),
-		v.makeHeader(),
-		v.makeBody(),
-		v.makefooter(),
-	)
+	return container.NewBorder(v.makeHeader(), v.makeFooter(), nil, nil, v.makeBody())
 }
 
 func (v *MainView) next() {
@@ -61,10 +65,12 @@ func (v *MainView) makeHeader() *fyne.Container {
 		),
 		container.NewHBox(
 			widget.NewButtonWithIcon("Check All", theme.CheckButtonCheckedIcon(), func() {
-				// v.notifyEvent("onselectall")
+				v.workfolder.SetSelectFlagsAll(true)
+				v.Refresh()
 			}),
 			widget.NewButtonWithIcon("Clear All", theme.CheckButtonIcon(), func() {
-				// v.notifyEvent("onunselectall")
+				v.workfolder.SetSelectFlagsAll(false)
+				v.Refresh()
 			}),
 			widget.NewButtonWithIcon("", theme.ViewRefreshIcon(), func() {
 				v.Refresh()
@@ -74,56 +80,55 @@ func (v *MainView) makeHeader() *fyne.Container {
 }
 
 func (v *MainView) makeBody() *fyne.Container {
-	// v.pathListWidget = widget.NewListWithData(v.bindURIList,
-	// 	func() fyne.CanvasObject {
-	// 		check := widget.NewCheck("", func(value bool) {})
-	// 		check.Disable()
-	// 		return container.NewHBox(
-	// 			check,
-	// 			widget.NewIcon(theme.FileImageIcon()),
-	// 			widget.NewLabel("Template Object"),
-	// 		)
-	// 	},
-	// 	func(i binding.DataItem, o fyne.CanvasObject) {
-	// 		uri, _ := i.(binding.URI).Get()
-	// 		name := uri.Name()
-	// 		isSelect := model.GetWorkFolderModel().QueryListItemIsSelected(uri)
-	// 		o.(*fyne.Container).Objects[0].(*widget.Check).Bind(binding.BindBool(&isSelect))
-	// 		o.(*fyne.Container).Objects[2].(*widget.Label).Bind(binding.BindString(&name))
-	// 	})
+	v.pathListWidget = widget.NewListWithData(v.bindURIList,
+		func() fyne.CanvasObject {
+			check := widget.NewCheck("", func(value bool) {})
+			check.Disable()
+			return container.NewHBox(
+				check,
+				widget.NewIcon(theme.FileImageIcon()),
+				widget.NewLabel("Template Object"),
+			)
+		},
+		func(i binding.DataItem, o fyne.CanvasObject) {
+			uri, _ := i.(binding.URI).Get()
+			name := uri.Name()
+			isSelect := GetWorkFolder().QueryListItemIsSelected(uri)
+			// Bind Checkbox
+			o.(*fyne.Container).Objects[0].(*widget.Check).Bind(binding.BindBool(&isSelect))
+			// Bind URI List
+			o.(*fyne.Container).Objects[2].(*widget.Label).Bind(binding.BindString(&name))
+		})
 
-	// image := canvas.NewImageFromResource(theme.FileImageIcon())
-	// image.FillMode = canvas.ImageFillContain
-	// image.SetMinSize(fyne.NewSize(50, 50))
-	// v.preview = container.NewMax(canvas.NewRectangle(theme.BackgroundColor()), image)
+	image := canvas.NewImageFromResource(theme.FileImageIcon())
+	image.FillMode = canvas.ImageFillContain
+	image.SetMinSize(fyne.NewSize(50, 50))
+	v.preview = container.NewMax(canvas.NewRectangle(theme.BackgroundColor()), image)
 
-	// v.pathListWidget.OnSelected = func(id widget.ListItemID) {
-	// 	workFolder := model.GetWorkFolderModel()
-	// 	// Set Select Checkbox state.
-	// 	selectedURI, selectedFlag := workFolder.GetListItem(id)
-	// 	workFolder.UpdateURIListItem(id, selectedURI, !selectedFlag)
-	// 	log.Printf("[%s, %v] -> [%s, %v]", selectedURI, selectedFlag, selectedURI, !selectedFlag)
-	// 	// Get recently list again.
-	// 	v.bindURIList = workFolder.CreateBindingURIList()
+	v.pathListWidget.OnSelected = func(id widget.ListItemID) {
+		v.workfolder = GetWorkFolder()
+		// Set Select Checkbox state.
+		v.workfolder.UpdateSelectedURIListItem(id)
+		// Get latest URI list.
+		v.bindURIList = v.workfolder.CreateBindingURIList()
 
-	// 	// Image Preview Update asyncronous, because image load process may heavy.
-	// 	go func() {
-	// 		newImage := canvas.NewImageFromFile(selectedURI.Path())
-	// 		log.Printf("newImage: %#v\n", newImage)
-	// 		newImage.FillMode = canvas.ImageFillContain
-	// 		newImage.SetMinSize(fyne.NewSize(50, 50))
-	// 		// Delete Image objectOn
-	// 		v.preview.Remove(v.preview.Objects[1])
-	// 		v.preview.Add(newImage)
-	// 		v.Refresh()
-	// 	}()
-	// }
+		// Image Preview Update asyncronous, because image load process may heavy.
+		go func() {
+			newImage := canvas.NewImageFromFile(v.workfolder.UriList[id].Path())
+			log.Printf("Preview newImage: %#v\n", newImage)
+			newImage.FillMode = canvas.ImageFillContain
+			newImage.SetMinSize(fyne.NewSize(50, 50))
+			// Replace Image
+			v.preview.Remove(v.preview.Objects[1])
+			v.preview.Add(newImage)
+			v.Refresh()
+		}()
+	}
 
-	// return container.NewMax(container.NewHSplit(v.pathListWidget, v.preview))
-	return container.NewWithoutLayout()
+	return container.NewMax(container.NewHSplit(v.pathListWidget, v.preview))
 }
 
-func (v *MainView) makefooter() *fyne.Container {
+func (v *MainView) makeFooter() *fyne.Container {
 	return container.NewHBox(
 		widget.NewButton("event test", func() {
 			On("click", v.events)
