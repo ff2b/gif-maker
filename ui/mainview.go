@@ -51,10 +51,6 @@ func (v *MainView) createComponents() *fyne.Container {
 	return container.NewBorder(v.makeHeader(), v.makeFooter(), nil, nil, v.makeBody())
 }
 
-func (v *MainView) next() {
-	v.ctx.SetState(NewNextView(v.ctx))
-}
-
 func (v *MainView) makeHeader() *fyne.Container {
 	return container.NewVBox(
 		container.NewHBox(

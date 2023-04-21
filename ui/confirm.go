@@ -14,7 +14,7 @@ const (
 	CONFIRM_TXT   = "OK"
 	DISMISS_TXT   = "Cancel"
 	CONFIRM_WIDTH = float32(250)
-	CONFIRM_HIGHT = float32(250)
+	CONFIRM_HIGHT = float32(200)
 )
 
 type ConfirmView struct {
@@ -34,7 +34,7 @@ func NewConfirmView(ctx *UIContext) *ConfirmView {
 func (v *ConfirmView) ShowUI() {
 	workfolder := GetWorkFolder()
 	selectedItems := workfolder.GetSelectedURIs()
-	msg := fmt.Sprintf("%d/%d files Selected. Create GIF file?", len(selectedItems), len(workfolder.UriList))
+	msg := fmt.Sprintf("%d/%d files Selected. Create GIF file?\n", len(selectedItems), len(workfolder.UriList))
 	for i, isSelect := range workfolder.IsSelectedFlags {
 		if isSelect {
 			msg = fmt.Sprintf("%s\n%s", msg, workfolder.UriList[i].Name())
@@ -63,11 +63,13 @@ func (v *ConfirmView) Refresh() {
 }
 
 func (v *ConfirmView) createComponents() *fyne.Container {
+	// nil return because dialog is not Container
 	return nil
 }
 
 func (v *ConfirmView) onOK() {
-	log.Print("OK clicked, TODO: exec GIF create function")
+	result := GIFEncode()
+	log.Print("GIF Ganarate Successed! Save to: ", result)
 	v.ctx.SetState(NewMainView(v.ctx))
 }
 
