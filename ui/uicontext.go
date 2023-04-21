@@ -23,5 +23,5 @@ func NewUIContext(win *fyne.Window) *UIContext {
 func (u *UIContext) SetState(view IView) {
 	u.view = view
 	u.view.ShowUI()
-	log.Println("App State Changed. Transition to:", u.view.GetViewType())
+	log.Printf("App State Changed. Transition to: %s", u.view.GetViewType())
 }

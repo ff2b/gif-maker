@@ -1,12 +1,14 @@
 package ui
 
 import (
-	"log"
+	"errors"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/data/binding"
+	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
@@ -24,8 +26,8 @@ func NewMainView(ctx *UIContext) *MainView {
 	view := &MainView{ctx: ctx, events: nil, pathListWidget: nil, bindURIList: nil, preview: nil, workfolder: nil}
 	// Register events
 	view.events = map[EventType]func(){
-		"click": view.onClick,
-		"open":  view.onOpenFolder,
+		"open":    view.onOpenFolder,
+		"confirm": view.onOpenConfirm,
 	}
 	view.workfolder = GetWorkFolder()
 	view.bindURIList = view.workfolder.CreateBindingURIList()
@@ -115,7 +117,7 @@ func (v *MainView) makeBody() *fyne.Container {
 		// Image Preview Update asyncronous, because image load process may heavy.
 		go func() {
 			newImage := canvas.NewImageFromFile(v.workfolder.UriList[id].Path())
-			log.Printf("Preview newImage: %#v\n", newImage)
+			// log.Printf("Preview newImage: %#v\n", newImage)
 			newImage.FillMode = canvas.ImageFillContain
 			newImage.SetMinSize(fyne.NewSize(50, 50))
 			// Replace Image
@@ -129,17 +131,24 @@ func (v *MainView) makeBody() *fyne.Container {
 }
 
 func (v *MainView) makeFooter() *fyne.Container {
+	createGIFButton := widget.NewButton("Create GIF", func() {
+		On("confirm", v.events)
+	})
+	createGIFButton.Importance = widget.HighImportance
+
 	return container.NewHBox(
-		widget.NewButton("event test", func() {
-			On("click", v.events)
-		}),
-		widget.NewButton("change state", func() { v.next() }),
+		layout.NewSpacer(),
+		createGIFButton,
 	)
 }
 
 // Event functions
-func (v *MainView) onClick() {
-	log.Println("onclick event hudled!")
+func (v *MainView) onOpenConfirm() {
+	if len(GetWorkFolder().GetSelectedURIs()) == 0 {
+		dialog.ShowError(errors.New("please select image file at least one"), v.ctx.win)
+		return
+	}
+	v.ctx.SetState(NewConfirmView(v.ctx))
 }
 
 func (v *MainView) onOpenFolder() {
