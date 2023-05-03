@@ -32,7 +32,7 @@ func (v *NextView) On(e EventType) {
 	if f, ok := v.events[e]; !ok {
 		log.Fatal("Error: Invalid event fired.", e, ok)
 	} else {
-		log.Println("Event hundled.", e)
+		log.Println("Event handled.", e)
 		f()
 	}
 }

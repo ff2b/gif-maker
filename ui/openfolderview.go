@@ -70,7 +70,7 @@ func (v *OpenFolderView) createComponents() *fyne.Container {
 	return nil
 }
 
-// Event hundler functions
+// Event handler functions
 func (v *OpenFolderView) onCancel() {
 	v.ctx.SetState(NewMainView(v.ctx))
 }

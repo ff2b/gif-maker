@@ -42,6 +42,7 @@ func GIFEncode() string {
 		delays = append(delays, 20)
 	}
 
+	// Generate GIF
 	f, err := os.Create(outPath)
 	if err != nil {
 		log.Fatal(err)
@@ -54,5 +55,6 @@ func GIFEncode() string {
 		LoopCount: 0,
 	}
 	gif.EncodeAll(f, opts)
+
 	return outPath
 }

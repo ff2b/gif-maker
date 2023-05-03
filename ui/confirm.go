@@ -70,7 +70,8 @@ func (v *ConfirmView) createComponents() *fyne.Container {
 func (v *ConfirmView) onOK() {
 	result := GIFEncode()
 	log.Print("GIF Ganarate Successed! Save to: ", result)
-	v.ctx.SetState(NewMainView(v.ctx))
+	v.ctx.SetTempGIF(result)
+	v.ctx.SetState(NewResultPreView(v.ctx))
 }
 
 func (v *ConfirmView) onCancel() {
