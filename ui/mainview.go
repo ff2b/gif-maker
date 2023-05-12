@@ -2,6 +2,7 @@ package ui
 
 import (
 	"errors"
+	"image/color"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -13,9 +14,15 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
+const (
+	MSG_INIT        = "Target file not found. Open workspace folder"
+	MSG_SELECT_FILE = "Select target images"
+)
+
 type MainView struct {
 	ctx            *UIContext
 	events         map[EventType]func()
+	message        *widget.Label
 	pathListWidget *widget.List
 	bindURIList    binding.DataList
 	preview        *fyne.Container
@@ -23,7 +30,7 @@ type MainView struct {
 }
 
 func NewMainView(ctx *UIContext) *MainView {
-	view := &MainView{ctx: ctx, events: nil, pathListWidget: nil, bindURIList: nil, preview: nil, workfolder: nil}
+	view := &MainView{ctx: ctx, events: nil, message: widget.NewLabel(MSG_INIT), pathListWidget: nil, bindURIList: nil, preview: nil, workfolder: nil}
 	// Register events
 	view.events = map[EventType]func(){
 		"open":    view.onOpenFolder,
@@ -36,6 +43,7 @@ func NewMainView(ctx *UIContext) *MainView {
 
 func (v *MainView) ShowUI() {
 	v.ctx.win.SetContent(v.createComponents())
+	v.Refresh()
 }
 
 func (v *MainView) GetViewType() ViewType {
@@ -44,6 +52,9 @@ func (v *MainView) GetViewType() ViewType {
 
 func (v *MainView) Refresh() {
 	v.bindURIList = v.workfolder.CreateBindingURIList()
+	if v.bindURIList.Length() > 0 {
+		v.message.Text = MSG_SELECT_FILE
+	}
 	v.ctx.win.Content().Refresh()
 }
 
@@ -54,13 +65,15 @@ func (v *MainView) createComponents() *fyne.Container {
 func (v *MainView) makeHeader() *fyne.Container {
 	return container.NewVBox(
 		container.NewHBox(
-			widget.NewButton("Open", func() {
+			widget.NewButtonWithIcon("Open", theme.FolderOpenIcon(), func() {
 				On("open", v.events)
 			}),
-			widget.NewButton("Help", func() {
+			widget.NewButtonWithIcon("Help", theme.HelpIcon(), func() {
 				// v.notifyEvent("openhelp")
 			}),
 		),
+		canvas.NewLine(color.RGBA{117, 117, 117, 255}),
+		container.NewHBox(widget.NewIcon(theme.InfoIcon()), v.message),
 		container.NewHBox(
 			widget.NewButtonWithIcon("Check All", theme.CheckButtonCheckedIcon(), func() {
 				v.workfolder.SetSelectFlagsAll(true)
@@ -123,7 +136,10 @@ func (v *MainView) makeBody() *fyne.Container {
 		}()
 	}
 
-	return container.NewMax(container.NewHSplit(v.pathListWidget, v.preview))
+	split := container.NewHSplit(v.pathListWidget, v.preview)
+	split.SetOffset(0.7)
+
+	return container.NewMax(split)
 }
 
 func (v *MainView) makeFooter() *fyne.Container {

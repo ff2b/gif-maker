@@ -19,6 +19,7 @@ type UIContext struct {
 func NewUIContext(win *fyne.Window) *UIContext {
 	ctx := &UIContext{win: (*win), view: nil, tempGIF: nil, encodeStatus: make(chan string)}
 	ctx.SetState(NewMainView(ctx))
+	ctx.win.SetMainMenu(GetMainMenu())
 	log.Println("App initialized. Now state:", ctx.view.GetViewType())
 	ctx.win.Show()
 	ctx.win.Content().Refresh()

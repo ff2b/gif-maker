@@ -27,3 +27,17 @@ func On(e EventType, events map[EventType]func()) {
 		f()
 	}
 }
+
+// Generate App tab component
+func GetMainMenu() *fyne.MainMenu {
+	return fyne.NewMainMenu(
+		fyne.NewMenu("File"),
+		fyne.NewMenu("Edit",
+			fyne.NewMenuItem(" Setting ", func() {}),
+		),
+		fyne.NewMenu(" Help ",
+			fyne.NewMenuItem(" Help ", func() {}),
+			fyne.NewMenuItem(" Version ", func() {}),
+		),
+	)
+}

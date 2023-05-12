@@ -7,6 +7,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/storage"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
@@ -53,7 +54,7 @@ func (v *ResultPreView) createComponents() *fyne.Container {
 	v.gif = gif
 	v.gif.SetMinSize(fyne.NewSize(350, 350))
 	v.gif.Start()
-	// Buttons: Play, Pause, Replay
+	// Buttons: Play, Pause
 	playButton := widget.NewButtonWithIcon("", theme.MediaPlayIcon(), func() {
 		On("play", v.events)
 	})
@@ -71,8 +72,8 @@ func (v *ResultPreView) createComponents() *fyne.Container {
 
 	return container.NewVBox(
 		gif,
-		container.NewHBox(playButton, pauseButton),
-		container.NewHBox(backMainButton, saveButton),
+		container.NewCenter(container.NewHBox(playButton, pauseButton)),
+		container.NewHBox(backMainButton, layout.NewSpacer(), saveButton),
 	)
 }
 
