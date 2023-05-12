@@ -18,17 +18,18 @@ type ResultPreView struct {
 	ctx      *UIContext
 	events   map[EventType]func()
 	gif      *xwidget.AnimatedGif
-	distPath fyne.URI
+	destPath fyne.URI
 }
 
 func NewResultPreView(ctx *UIContext) *ResultPreView {
 	view := &ResultPreView{ctx: ctx, events: nil}
 	view.events = map[EventType]func(){
-		"play":         view.onStartGIF,
-		"pause":        view.onPauseGIF,
-		"back":         view.onBackMain,
-		"save":         view.onSave,
-		"save-success": view.onSaveSuccess,
+		"play":                   view.onStartGIF,
+		"stop":                   view.onStopGIF,
+		"back":                   view.onBackMain,
+		"save":                   view.onSave,
+		"save-success":           view.onSaveSuccess,
+		"invalid-file-extension": view.onInvalidFileExtension,
 	}
 	return view
 }
@@ -54,14 +55,18 @@ func (v *ResultPreView) createComponents() *fyne.Container {
 	v.gif = gif
 	v.gif.SetMinSize(fyne.NewSize(350, 350))
 	v.gif.Start()
-	// Buttons: Play, Pause
-	playButton := widget.NewButtonWithIcon("", theme.MediaPlayIcon(), func() {
-		On("play", v.events)
-	})
-	pauseButton := widget.NewButtonWithIcon("", theme.MediaPauseIcon(), func() {
-		On("pause", v.events)
-	})
-	// Footer buttons: Back, Save GIF
+
+	playTool := container.NewCenter(
+		widget.NewToolbar(
+			widget.NewToolbarAction(theme.MediaPlayIcon(), func() {
+				On("play", v.events)
+			}),
+			widget.NewToolbarAction(theme.MediaStopIcon(), func() {
+				On("stop", v.events)
+			}),
+		),
+	)
+
 	backMainButton := widget.NewButtonWithIcon("Back Home", theme.NavigateBackIcon(), func() {
 		On("back", v.events)
 	})
@@ -71,8 +76,9 @@ func (v *ResultPreView) createComponents() *fyne.Container {
 		})
 
 	return container.NewVBox(
+		widget.NewLabelWithStyle("Preview", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 		gif,
-		container.NewCenter(container.NewHBox(playButton, pauseButton)),
+		playTool,
 		container.NewHBox(backMainButton, layout.NewSpacer(), saveButton),
 	)
 }
@@ -83,9 +89,9 @@ func (v *ResultPreView) onStartGIF() {
 	log.Print("start clicked")
 }
 
-func (v *ResultPreView) onPauseGIF() {
+func (v *ResultPreView) onStopGIF() {
 	v.gif.Stop()
-	log.Print("pause clicked")
+	log.Print("stop clicked")
 }
 
 func (v *ResultPreView) onBackMain() {
@@ -100,20 +106,21 @@ func (v *ResultPreView) onSave() {
 			log.Println("FileSave dialog canceled.")
 			return
 		}
-		if chosen.URI().Extension() == "" {
-			v.distPath = storage.NewFileURI(chosen.URI().Path() + ".gif")
-		} else {
-			v.distPath = chosen.URI()
+
+		v.destPath = chosen.URI()
+
+		// .gif prefix validation
+		if v.destPath.Extension() == "" {
+			// chosen was unnessesary file open. So delete that file.
+			err := storage.Delete(chosen.URI())
+			if err != nil {
+				log.Fatal(err)
+			}
+			v.destPath = storage.NewFileURI(fmt.Sprint(v.destPath.Path(), ".gif"))
 		}
 
 		if err != nil {
 			log.Fatal(err)
-		}
-		log.Println("dist: ", v.distPath)
-
-		err = storage.Copy(v.ctx.tempGIF, v.distPath)
-		if err != nil {
-			log.Println(err)
 		}
 
 		On("save-success", v.events)
@@ -124,5 +131,13 @@ func (v *ResultPreView) onSave() {
 }
 
 func (v *ResultPreView) onSaveSuccess() {
-	dialog.ShowInformation("Save GIF file was successed", fmt.Sprint("Save to\n", v.distPath.Path()), v.ctx.win)
+	err := storage.Copy(v.ctx.tempGIF, v.destPath)
+	if err != nil {
+		log.Println(err)
+	}
+	dialog.ShowInformation("Save GIF file was successed", fmt.Sprint("Save to\n", v.destPath.Path()), v.ctx.win)
+}
+
+func (v *ResultPreView) onInvalidFileExtension() {
+	dialog.ShowInformation("Caution", fmt.Sprintf("Please specify .gif prefix. %s is invalid filename", v.destPath.Name()), v.ctx.win)
 }

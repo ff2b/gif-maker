@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"fyne.io/fyne/v2"
+	"github.com/ff2b/gif-maker/config"
 )
 
 type EventType string
@@ -33,7 +34,12 @@ func GetMainMenu() *fyne.MainMenu {
 	return fyne.NewMainMenu(
 		fyne.NewMenu("File"),
 		fyne.NewMenu("Edit",
-			fyne.NewMenuItem(" Setting ", func() {}),
+			fyne.NewMenuItem(" Setting ", func() { config.NewConfig().Load() }),
+			fyne.NewMenuItem(" Options ", func() {
+				c := config.NewConfig()
+				c.Load()
+				c.Save()
+			}),
 		),
 		fyne.NewMenu(" Help ",
 			fyne.NewMenuItem(" Help ", func() {}),

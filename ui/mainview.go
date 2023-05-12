@@ -15,8 +15,9 @@ import (
 )
 
 const (
-	MSG_INIT        = "Target file not found. Open workspace folder"
-	MSG_SELECT_FILE = "Select target images"
+	MSG_INIT                    = "Target file not found. Open workspace folder"
+	MSG_SELECT_FILE             = "Select target images"
+	MSG_ERR_NOT_SELECT_ANYTHING = "please select image file at least one"
 )
 
 type MainView struct {
@@ -63,17 +64,19 @@ func (v *MainView) createComponents() *fyne.Container {
 }
 
 func (v *MainView) makeHeader() *fyne.Container {
+	tools := widget.NewToolbar(
+		widget.NewToolbarAction(theme.FolderOpenIcon(), func() {
+			On("open", v.events)
+		}),
+		widget.NewToolbarAction(theme.HelpIcon(), func() {
+			// On("help", v.events)
+		}),
+		widget.NewToolbarAction(theme.ViewRefreshIcon(), func() {
+			v.Refresh()
+		}),
+	)
 	return container.NewVBox(
-		container.NewHBox(
-			widget.NewButtonWithIcon("Open", theme.FolderOpenIcon(), func() {
-				On("open", v.events)
-			}),
-			widget.NewButtonWithIcon("Help", theme.HelpIcon(), func() {
-				// v.notifyEvent("openhelp")
-			}),
-		),
-		canvas.NewLine(color.RGBA{117, 117, 117, 255}),
-		container.NewHBox(widget.NewIcon(theme.InfoIcon()), v.message),
+		tools,
 		container.NewHBox(
 			widget.NewButtonWithIcon("Check All", theme.CheckButtonCheckedIcon(), func() {
 				v.workfolder.SetSelectFlagsAll(true)
@@ -81,9 +84,6 @@ func (v *MainView) makeHeader() *fyne.Container {
 			}),
 			widget.NewButtonWithIcon("Clear All", theme.CheckButtonIcon(), func() {
 				v.workfolder.SetSelectFlagsAll(false)
-				v.Refresh()
-			}),
-			widget.NewButtonWithIcon("", theme.ViewRefreshIcon(), func() {
 				v.Refresh()
 			}),
 		),
@@ -143,21 +143,27 @@ func (v *MainView) makeBody() *fyne.Container {
 }
 
 func (v *MainView) makeFooter() *fyne.Container {
-	createGIFButton := widget.NewButton("Create GIF", func() {
+	createGIFButton := widget.NewButtonWithIcon("Create GIF", theme.MediaPlayIcon(), func() {
 		On("confirm", v.events)
 	})
 	createGIFButton.Importance = widget.HighImportance
 
-	return container.NewHBox(
-		layout.NewSpacer(),
-		createGIFButton,
+	return container.NewPadded(
+		container.NewVBox(
+			canvas.NewLine(color.RGBA{117, 117, 117, 255}),
+			container.NewHBox(
+				widget.NewIcon(theme.InfoIcon()),
+				v.message,
+				layout.NewSpacer(),
+				createGIFButton),
+		),
 	)
 }
 
 // Event functions
 func (v *MainView) onOpenConfirm() {
 	if len(GetWorkFolder().GetSelectedURIs()) == 0 {
-		dialog.ShowError(errors.New("please select image file at least one"), v.ctx.win)
+		dialog.ShowError(errors.New(MSG_ERR_NOT_SELECT_ANYTHING), v.ctx.win)
 		return
 	}
 	v.ctx.SetState(NewConfirmView(v.ctx))
