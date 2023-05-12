@@ -29,6 +29,7 @@ func (g *GifMakerGUI) init() {
 	ctx := ui.NewUIContext(&win)
 
 	g.context = *ctx
+	win.SetOnClosed(g.context.ClearTempData)
 	g.app.Run()
 }
 

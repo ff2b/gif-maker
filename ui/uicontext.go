@@ -10,13 +10,14 @@ import (
 )
 
 type UIContext struct {
-	win        fyne.Window
-	view       IView
-	tempGIF fyne.URI
+	win          fyne.Window
+	view         IView
+	tempGIF      fyne.URI
+	encodeStatus chan string
 }
 
 func NewUIContext(win *fyne.Window) *UIContext {
-	ctx := &UIContext{win: (*win), view: nil, tempGIF: nil}
+	ctx := &UIContext{win: (*win), view: nil, tempGIF: nil, encodeStatus: make(chan string)}
 	ctx.SetState(NewMainView(ctx))
 	log.Println("App initialized. Now state:", ctx.view.GetViewType())
 	ctx.win.Show()
@@ -30,15 +31,25 @@ func (u *UIContext) SetState(view IView) {
 	log.Printf("App State Changed. Transition to: %s", u.view.GetViewType())
 }
 
-func (c *UIContext) SetTempGIF(path string) {
-	parsed_uri, error := storage.ParseURI("file:" + path)
+func (u *UIContext) UpdateGIFEncodeStatus(status string) {
+	// ***Status Description***
+	// "encoding", It is still GIF Encoding.
+	// "complete", GIF Encoding has completed.
+	if status != "encoding" && status != "complete" {
+		log.Fatal("App internal error, Invalid status specified: ", status)
+	}
+	u.encodeStatus <- status
+}
+
+func (u *UIContext) SetTempGIF(path string) {
+	parsedURI, error := storage.ParseURI("file:" + path)
 	if error != nil {
 		log.Fatalf("ERROR: ParseURI(%s) failed.", path)
 	}
-	c.tempGIF = parsed_uri
+	u.tempGIF = parsedURI
 }
 
-func (c *UIContext) ClearTempData() {
+func (u *UIContext) ClearTempData() {
 	tmp := "tmp"
 	files, err := os.ReadDir(tmp)
 	if err != nil {

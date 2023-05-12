@@ -1,28 +1,33 @@
 package ui
 
 import (
+	"fmt"
 	"log"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/storage"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 	xwidget "fyne.io/x/fyne/widget"
 )
 
 type ResultPreView struct {
-	ctx    *UIContext
-	events map[EventType]func()
+	ctx      *UIContext
+	events   map[EventType]func()
+	gif      *xwidget.AnimatedGif
+	distPath fyne.URI
 }
 
 func NewResultPreView(ctx *UIContext) *ResultPreView {
 	view := &ResultPreView{ctx: ctx, events: nil}
 	view.events = map[EventType]func(){
-		"play":   view.onStartGIF,
-		"pause":  view.onPauseGIF,
-		"replay": view.onReplayGIF,
-		"back":   view.onBackMain,
-		"save":   view.onSave,
+		"play":         view.onStartGIF,
+		"pause":        view.onPauseGIF,
+		"back":         view.onBackMain,
+		"save":         view.onSave,
+		"save-success": view.onSaveSuccess,
 	}
 	return view
 }
@@ -45,8 +50,9 @@ func (v *ResultPreView) createComponents() *fyne.Container {
 	if err != nil {
 		log.Printf("NewAnimatedGif failed\n%s", err)
 	}
-	gif.SetMinSize(fyne.NewSize(350, 350))
-	gif.Start()
+	v.gif = gif
+	v.gif.SetMinSize(fyne.NewSize(350, 350))
+	v.gif.Start()
 	// Buttons: Play, Pause, Replay
 	playButton := widget.NewButtonWithIcon("", theme.MediaPlayIcon(), func() {
 		On("play", v.events)
@@ -54,11 +60,8 @@ func (v *ResultPreView) createComponents() *fyne.Container {
 	pauseButton := widget.NewButtonWithIcon("", theme.MediaPauseIcon(), func() {
 		On("pause", v.events)
 	})
-	replayButton := widget.NewButtonWithIcon("", theme.MediaReplayIcon(), func() {
-		On("replay", v.events)
-	})
 	// Footer buttons: Back, Save GIF
-	backMainButton := widget.NewButtonWithIcon("Back", theme.NavigateBackIcon(), func() {
+	backMainButton := widget.NewButtonWithIcon("Back Home", theme.NavigateBackIcon(), func() {
 		On("back", v.events)
 	})
 	saveButton := widget.NewButtonWithIcon("Save", theme.DocumentSaveIcon(),
@@ -68,22 +71,20 @@ func (v *ResultPreView) createComponents() *fyne.Container {
 
 	return container.NewVBox(
 		gif,
-		container.NewHBox(playButton, pauseButton, replayButton),
+		container.NewHBox(playButton, pauseButton),
 		container.NewHBox(backMainButton, saveButton),
 	)
 }
 
 // Event handler functions
 func (v *ResultPreView) onStartGIF() {
+	v.gif.Start()
 	log.Print("start clicked")
 }
 
 func (v *ResultPreView) onPauseGIF() {
+	v.gif.Stop()
 	log.Print("pause clicked")
-}
-
-func (v *ResultPreView) onReplayGIF() {
-	log.Print("replay clicked")
 }
 
 func (v *ResultPreView) onBackMain() {
@@ -93,5 +94,34 @@ func (v *ResultPreView) onBackMain() {
 }
 
 func (v *ResultPreView) onSave() {
+	fileSave := dialog.NewFileSave(func(chosen fyne.URIWriteCloser, err error) {
+		if chosen == nil {
+			log.Println("FileSave dialog canceled.")
+			return
+		}
+		if chosen.URI().Extension() == "" {
+			v.distPath = storage.NewFileURI(chosen.URI().Path() + ".gif")
+		} else {
+			v.distPath = chosen.URI()
+		}
+
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Println("dist: ", v.distPath)
+
+		err = storage.Copy(v.ctx.tempGIF, v.distPath)
+		if err != nil {
+			log.Println(err)
+		}
+
+		On("save-success", v.events)
+	}, v.ctx.win)
+
+	fileSave.Show()
 	log.Print("save clicked")
+}
+
+func (v *ResultPreView) onSaveSuccess() {
+	dialog.ShowInformation("Save GIF file was successed", fmt.Sprint("Save to\n", v.distPath.Path()), v.ctx.win)
 }
