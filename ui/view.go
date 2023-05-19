@@ -4,7 +4,7 @@ import (
 	"log"
 
 	"fyne.io/fyne/v2"
-	"github.com/ff2b/gif-maker/config"
+	_ "github.com/ff2b/gif-maker/config"
 )
 
 type EventType string
@@ -30,18 +30,18 @@ func On(e EventType, events map[EventType]func()) {
 }
 
 // Generate App tab component
-func GetMainMenu() *fyne.MainMenu {
+func GetMainMenu(ctx *UIContext) *fyne.MainMenu {
 	return fyne.NewMainMenu(
 		fyne.NewMenu("File"),
 		fyne.NewMenu("Edit",
-			fyne.NewMenuItem(" Setting ", func() { config.NewConfig().Load() }),
 			fyne.NewMenuItem(" Options ", func() {
-				c := config.NewConfig()
-				c.Load()
-				c.Save()
+				// c := config.NewConfig()
+				// c.Load()
+				// c.Save()
+				NewOptionView().ShowUI()
 			}),
 		),
-		fyne.NewMenu(" Help ",
+		fyne.NewMenu("Help",
 			fyne.NewMenuItem(" Help ", func() {}),
 			fyne.NewMenuItem(" Version ", func() {}),
 		),

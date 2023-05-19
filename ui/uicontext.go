@@ -19,7 +19,7 @@ type UIContext struct {
 func NewUIContext(win *fyne.Window) *UIContext {
 	ctx := &UIContext{win: (*win), view: nil, tempGIF: nil, encodeStatus: make(chan string)}
 	ctx.SetState(NewMainView(ctx))
-	ctx.win.SetMainMenu(GetMainMenu())
+	ctx.win.SetMainMenu(GetMainMenu(ctx))
 	log.Println("App initialized. Now state:", ctx.view.GetViewType())
 	ctx.win.Show()
 	ctx.win.Content().Refresh()
@@ -40,6 +40,11 @@ func (u *UIContext) UpdateGIFEncodeStatus(status string) {
 		log.Fatal("App internal error, Invalid status specified: ", status)
 	}
 	u.encodeStatus <- status
+}
+
+func (u *UIContext) IsEncodeComplete() bool {
+	status := <-u.encodeStatus
+	return status == "complete"
 }
 
 func (u *UIContext) SetTempGIF(path string) {

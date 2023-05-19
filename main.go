@@ -26,6 +26,7 @@ func (g *GifMakerGUI) init() {
 	win := g.app.NewWindow(APP_TITLE)
 	win.Resize(fyne.NewSize(APP_WIDTH, APP_HIGHT))
 	win.SetMaster()
+	win.CenterOnScreen()
 	ctx := ui.NewUIContext(&win)
 
 	g.context = *ctx
