@@ -86,16 +86,13 @@ func (v *ResultPreView) createComponents() *fyne.Container {
 // Event handler functions
 func (v *ResultPreView) onStartGIF() {
 	v.gif.Start()
-	log.Print("start clicked")
 }
 
 func (v *ResultPreView) onStopGIF() {
 	v.gif.Stop()
-	log.Print("stop clicked")
 }
 
 func (v *ResultPreView) onBackMain() {
-	log.Print("back clicked")
 	v.ctx.ClearTempData()
 	v.ctx.SetState(NewMainView(v.ctx))
 }
@@ -111,7 +108,8 @@ func (v *ResultPreView) onSave() {
 
 		// .gif prefix validation
 		if v.destPath.Extension() == "" {
-			// chosen was unnessesary file open. So delete that file.
+			// fyne.URIWriteCloser create empty file. 
+			// So delete that unnecessary file, bcause destination path was changed.
 			err := storage.Delete(chosen.URI())
 			if err != nil {
 				log.Fatal(err)
@@ -127,7 +125,6 @@ func (v *ResultPreView) onSave() {
 	}, v.ctx.win)
 
 	fileSave.Show()
-	log.Print("save clicked")
 }
 
 func (v *ResultPreView) onSaveSuccess() {
