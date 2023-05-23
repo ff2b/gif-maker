@@ -39,6 +39,7 @@ func NewMainView(ctx *UIContext) *MainView {
 	view.events = map[EventType]func(){
 		"open":    view.onOpenFolder,
 		"confirm": view.onOpenConfirm,
+		"help":    view.onOpenHelp,
 	}
 	// Load config file and set defaults.
 	conf := config.NewConfig()
@@ -85,7 +86,7 @@ func (v *MainView) makeHeader() *fyne.Container {
 			On("open", v.events)
 		}),
 		widget.NewToolbarAction(theme.HelpIcon(), func() {
-			// On("help", v.events)
+			On("help", v.events)
 		}),
 		widget.NewToolbarAction(theme.ViewRefreshIcon(), func() {
 			v.Refresh()
@@ -187,4 +188,8 @@ func (v *MainView) onOpenConfirm() {
 
 func (v *MainView) onOpenFolder() {
 	v.ctx.SetState(NewOpenFolderView(v.ctx))
+}
+
+func (v *MainView) onOpenHelp() {
+	NewHelpView().ShowUI()
 }

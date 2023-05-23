@@ -42,8 +42,12 @@ func GetMainMenu(ctx *UIContext) *fyne.MainMenu {
 			}),
 		),
 		fyne.NewMenu("Help",
-			fyne.NewMenuItem(" Help ", func() {}),
-			fyne.NewMenuItem(" Version ", func() {}),
+			fyne.NewMenuItem(" Help ", func() {
+				NewHelpView().ShowUI()
+			}),
+			fyne.NewMenuItem(" Version ", func() {
+				NewVersionView().ShowUI()
+			}),
 		),
 	)
 }
