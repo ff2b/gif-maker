@@ -3,6 +3,7 @@ package ui
 import (
 	"errors"
 	"image/color"
+	"log"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -10,8 +11,10 @@ import (
 	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/layout"
+	"fyne.io/fyne/v2/storage"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
+	"github.com/ff2b/gif-maker/config"
 )
 
 const (
@@ -37,7 +40,20 @@ func NewMainView(ctx *UIContext) *MainView {
 		"open":    view.onOpenFolder,
 		"confirm": view.onOpenConfirm,
 	}
-	view.workfolder = GetWorkFolder()
+	// Load config file and set defaults.
+	conf := config.NewConfig()
+	conf.Load()
+	if ws := conf.WorkSpace; ws != "" {
+		// new uri
+		defaultWorkSpace := storage.NewFileURI(ws)
+		log.Println("load conf: ", defaultWorkSpace.Path())
+		//
+		view.workfolder = GetWorkFolderSpecifyPath(defaultWorkSpace)
+		log.Println(view.workfolder)
+	} else {
+		view.workfolder = GetWorkFolder()
+	}
+
 	view.bindURIList = view.workfolder.CreateBindingURIList()
 	return view
 }

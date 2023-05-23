@@ -6,6 +6,7 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/data/binding"
+	"fyne.io/fyne/v2/storage"
 )
 
 type WorkFolder struct {
@@ -41,6 +42,18 @@ func NewWorkFolder(uriList []fyne.URI) *WorkFolder {
 
 func GetWorkFolder() *WorkFolder {
 	return getWorkFolderInstance()
+}
+
+func GetWorkFolderSpecifyPath(folder fyne.URI) *WorkFolder {
+	wf := getWorkFolderInstance()
+	if ok, err := storage.CanList(folder); !ok || err != nil {
+		return nil
+	}
+	list, _ := storage.List(folder)
+	wf.UriList = filterJPGorPNG(list)
+	wf.IsSelectedFlags = make([]bool, len(wf.UriList))
+	wf.SetSelectFlagsAll(false)
+	return wf
 }
 
 func filterJPGorPNG(uriList []fyne.URI) []fyne.URI {

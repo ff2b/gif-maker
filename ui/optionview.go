@@ -13,7 +13,6 @@ import (
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 	"github.com/ff2b/gif-maker/config"
-	_ "github.com/ff2b/gif-maker/config"
 )
 
 const (
