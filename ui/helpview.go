@@ -10,6 +10,11 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
+const (
+	HELP_WIDTH  = float32(400)
+	HELP_HEIGHT = float32(500)
+)
+
 type HelpView struct {
 	subwin fyne.Window
 }
@@ -19,7 +24,8 @@ func NewHelpView() *HelpView {
 }
 
 func (v *HelpView) ShowUI() {
-	v.subwin.SetContent(v.createComponents())
+	v.subwin.Resize(fyne.NewSize(HELP_WIDTH, HELP_HEIGHT))
+	v.subwin.SetContent(container.NewScroll(v.createComponents()))
 	v.subwin.CenterOnScreen()
 	v.subwin.Show()
 }

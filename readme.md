@@ -41,16 +41,21 @@ NOTE: this options load from config/config.json
 
 ## How to run
 ### Run from source code
-Open termnal like Powershell/bash/mac terminal.  
-Then execute that command.  
+- First, intall golang >=1.20.  
+- Open termnal like Powershell/mac terminal/bash.  
+- Then execute `go run .` command in this app directory.  
 ```
-go run .
+gif-maker> go run .
 ```
 
-### Open from Compiled binary
-Download Releases from this github project. Then unpack zip.  
-Doubleclick **gif-maker** file  
+### ScreenShots
+![screenshot1](data/mainview1.jpg)
+![screenshot2](data/mainview2.jpg)
+![screenshot3](data/preview.jpg)
 
+### Build binary
+Please refer to fyne document 
+[Cross Compiling](https://developer.fyne.io/started/cross-compiling).  
 
 ## Disclaimer
 - This App is experimental demo application.
