@@ -9,6 +9,13 @@ import (
 	"os"
 	"path"
 	"time"
+
+	"github.com/ff2b/gif-maker/config"
+)
+
+const (
+	DEFAULT_GIF_RATE = 20
+	DEFAULT_GIF_LOOP = 0
 )
 
 func GIFEncode() string {
@@ -17,6 +24,7 @@ func GIFEncode() string {
 	fname := fmt.Sprintf("%d.gif", time.Now().Unix())
 	outPath := path.Join("tmp", fname)
 	uriList := GetWorkFolder().GetSelectedURIs()
+	delay, loop := loadGIFConfigs()
 
 	for _, uri := range uriList {
 		reader, err := os.Open(uri.Path())
@@ -39,7 +47,7 @@ func GIFEncode() string {
 		}
 
 		images = append(images, paletted)
-		delays = append(delays, 20)
+		delays = append(delays, delay)
 	}
 
 	// Generate GIF
@@ -52,9 +60,26 @@ func GIFEncode() string {
 	opts := &gif.GIF{
 		Image:     images,
 		Delay:     delays,
-		LoopCount: 0,
+		LoopCount: loop,
 	}
 	gif.EncodeAll(f, opts)
 
 	return outPath
+}
+
+// Load config and return delay, loopFlag
+// delay: 20-9999 [ms]
+// loopFlag: 0(infinite loop) or 1(only 1time loop)
+func loadGIFConfigs() (int, int) {
+	delay := DEFAULT_GIF_RATE
+	loop := DEFAULT_GIF_LOOP
+	conf := config.NewConfig()
+	conf.Load()
+	if conf.GIFRate != delay {
+		delay = conf.GIFRate
+	}
+	if !conf.GIFLoop {
+		loop = -1
+	}
+	return delay, loop
 }
